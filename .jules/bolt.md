@@ -1,0 +1,3 @@
+## 2024-05-23 - RAG Indexing Performance
+**Learning:** The `RagIndexingService` uses `FileUploader` from `gemini-utils`, which scans all files. `FileUploader` relies on the provided `FileSystemAdapter` to compute hashes. To optimize indexing of unchanged files, we cannot modify `FileUploader` logic directly. Instead, we must optimize the `FileSystemAdapter.computeHash` implementation to use a cache.
+**Action:** When optimizing file operations controlled by external libraries (like `gemini-utils`), look for adapter interfaces (like `FileSystemAdapter`) where you can inject caching or optimized logic.

@@ -18,6 +18,7 @@ export class ObsidianVaultAdapter implements FileSystemAdapter {
 	private historyFolder: string;
 	private includeAttachments: boolean;
 	private logError?: (message: string, ...args: unknown[]) => void;
+	private hashCacheProvider?: (path: string, mtime: number) => string | null;
 
 	constructor(options: {
 		vault: Vault;
@@ -26,6 +27,7 @@ export class ObsidianVaultAdapter implements FileSystemAdapter {
 		historyFolder?: string;
 		includeAttachments?: boolean;
 		logError?: (message: string, ...args: unknown[]) => void;
+		hashCacheProvider?: (path: string, mtime: number) => string | null;
 	}) {
 		this.vault = options.vault;
 		this.metadataCache = options.metadataCache;
@@ -33,6 +35,7 @@ export class ObsidianVaultAdapter implements FileSystemAdapter {
 		this.historyFolder = options.historyFolder || '';
 		this.includeAttachments = options.includeAttachments || false;
 		this.logError = options.logError;
+		this.hashCacheProvider = options.hashCacheProvider;
 	}
 
 	/**
@@ -174,6 +177,14 @@ export class ObsidianVaultAdapter implements FileSystemAdapter {
 		if (!(file instanceof TFile)) {
 			// File doesn't exist or isn't a file - return empty to signal "not hashable"
 			return '';
+		}
+
+		// Check cache first
+		if (this.hashCacheProvider) {
+			const cachedHash = this.hashCacheProvider(filePath, file.stat.mtime);
+			if (cachedHash) {
+				return cachedHash;
+			}
 		}
 
 		try {

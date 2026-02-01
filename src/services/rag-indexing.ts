@@ -11,6 +11,7 @@ export interface IndexedFileEntry {
 	resourceName: string; // Gemini file resource name
 	contentHash: string; // SHA-256 hash for reliable change detection
 	lastIndexed: number; // Timestamp
+	mtime?: number; // Last modification time of the file
 }
 
 /**
@@ -183,6 +184,13 @@ export class RagIndexingService {
 				historyFolder: this.plugin.settings.historyFolder,
 				includeAttachments: this.plugin.settings.ragIndexing.includeAttachments,
 				logError: (msg, ...args) => this.plugin.logger.error(msg, ...args),
+				hashCacheProvider: (path, mtime) => {
+					const entry = this.cache?.files[path];
+					if (entry && entry.mtime === mtime) {
+						return entry.contentHash;
+					}
+					return null;
+				},
 			});
 
 			// Create file uploader with logger
@@ -1180,10 +1188,12 @@ export class RagIndexingService {
 							// Update cache for newly indexed file
 							if (this.cache && event.currentFile && this.vaultAdapter) {
 								const contentHash = await this.vaultAdapter.computeHash(event.currentFile);
+								const file = this.plugin.app.vault.getAbstractFileByPath(event.currentFile);
 								this.cache.files[event.currentFile] = {
 									resourceName: storeName, // Store name as reference (individual doc names not available)
 									contentHash,
 									lastIndexed: Date.now(),
+									mtime: file instanceof TFile ? file.stat.mtime : undefined,
 								};
 								// Track last indexed file for resume capability
 								this.cache.lastIndexedFile = event.currentFile;
@@ -1209,10 +1219,12 @@ export class RagIndexingService {
 							// Skipped files are already in cache (unchanged), ensure they're tracked
 							if (this.cache && event.currentFile && !this.cache.files[event.currentFile] && this.vaultAdapter) {
 								const contentHash = await this.vaultAdapter.computeHash(event.currentFile);
+								const file = this.plugin.app.vault.getAbstractFileByPath(event.currentFile);
 								this.cache.files[event.currentFile] = {
 									resourceName: storeName,
 									contentHash,
 									lastIndexed: Date.now(),
+									mtime: file instanceof TFile ? file.stat.mtime : undefined,
 								};
 							}
 							// Incremental cache save for durability (count skipped files too)
@@ -1498,6 +1510,7 @@ export class RagIndexingService {
 										resourceName: storeName,
 										contentHash: content.hash,
 										lastIndexed: Date.now(),
+										mtime: file.stat.mtime,
 									};
 								}
 								// Incremental cache save for durability
@@ -1519,6 +1532,7 @@ export class RagIndexingService {
 										resourceName: storeName,
 										contentHash: content.hash,
 										lastIndexed: Date.now(),
+										mtime: file.stat.mtime,
 									};
 								}
 								// Incremental cache save for durability
