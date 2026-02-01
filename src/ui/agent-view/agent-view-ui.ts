@@ -123,6 +123,10 @@ export class AgentViewUI {
 		const toggleBtn = leftSection.createEl('button', {
 			cls: 'gemini-agent-toggle-btn',
 			title: 'Toggle context panel',
+			attr: {
+				'aria-label': 'Toggle context panel',
+				'aria-expanded': 'false',
+			},
 		});
 		setIcon(toggleBtn, 'chevron-down');
 
@@ -131,9 +135,11 @@ export class AgentViewUI {
 			if (isCollapsed) {
 				contextPanel.removeClass('gemini-agent-context-panel-collapsed');
 				setIcon(toggleBtn, 'chevron-up');
+				toggleBtn.setAttribute('aria-expanded', 'true');
 			} else {
 				contextPanel.addClass('gemini-agent-context-panel-collapsed');
 				setIcon(toggleBtn, 'chevron-down');
+				toggleBtn.setAttribute('aria-expanded', 'false');
 			}
 		});
 
@@ -640,6 +646,9 @@ export class AgentViewUI {
 					text: '×',
 					cls: 'gemini-agent-remove-btn',
 					title: 'Remove file',
+					attr: {
+						'aria-label': `Remove ${file.basename}`,
+					},
 				});
 
 				removeBtn.addEventListener('click', () => {
