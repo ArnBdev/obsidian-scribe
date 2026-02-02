@@ -72,6 +72,81 @@ export class AgentViewMessages {
 	}
 
 	/**
+	 * Format message content for better markdown rendering
+	 * Handles table formatting and paragraph separation
+	 */
+	private formatMessageContent(message: string): string {
+		const lines = message.split('\n');
+		const formattedLines: string[] = [];
+		let inTable = false;
+		let previousLineWasEmpty = true;
+
+		for (let i = 0; i < lines.length; i++) {
+			const line = lines[i];
+			const trimmedLine = line.trim();
+
+			// Optimized table detection
+			// First check for any pipe existence to avoid expensive operations on non-table lines
+			const hasPipe = line.includes('|');
+			let hasUnescapedPipe = false;
+			let isTableDivider = false;
+
+			if (hasPipe) {
+				// Use optimized replace to check for unescaped pipes
+				// This avoids creating array of strings like split/join did
+				hasUnescapedPipe = line.replace(/\\\|/g, '').includes('|');
+				isTableDivider = /^\s*\|?\s*[:?\-]+\s*\|/.test(line);
+			}
+
+			const isTableRow = hasUnescapedPipe && !isTableDivider && trimmedLine !== '|';
+
+			// Check if we're starting a table
+			if ((isTableRow || isTableDivider) && !inTable) {
+				inTable = true;
+				// Add empty line before table if needed
+				if (!previousLineWasEmpty && formattedLines.length > 0) {
+					formattedLines.push('');
+				}
+			}
+
+			// Check if we're ending a table
+			// Fix: Check BEFORE pushing the current line to ensure separation for non-table line
+			// This fixes the bug where line following a table was attached to it
+			if (inTable && !hasUnescapedPipe && trimmedLine !== '') {
+				inTable = false;
+				// Add empty line after table
+				formattedLines.push('');
+			} else if (inTable && trimmedLine === '') {
+				// Empty line also ends a table
+				inTable = false;
+			}
+
+			// Add the current line
+			formattedLines.push(line);
+
+			// For non-table content, add empty line between paragraphs
+			// Only if next line is not empty and not a table row
+			if (
+				!inTable &&
+				!hasUnescapedPipe &&
+				trimmedLine !== '' &&
+				i + 1 < lines.length // Check next line exists
+			) {
+				const nextLine = lines[i + 1];
+				// Avoid regex on nextLine, simple pipe check is good enough heuristic here
+				// If nextLine has pipe, it might be a table, so don't insert blank line (let table logic handle it)
+				if (nextLine.trim() !== '' && !nextLine.includes('|')) {
+					formattedLines.push('');
+				}
+			}
+
+			previousLineWasEmpty = trimmedLine === '';
+		}
+
+		return formattedLines.join('\n');
+	}
+
+	/**
 	 * Display a conversation entry as a message
 	 */
 	async displayMessage(entry: GeminiConversationEntry, currentSession: ChatSession | null) {
@@ -105,67 +180,13 @@ export class AgentViewMessages {
 		// But preserve existing double newlines and table formatting
 		let formattedMessage = entry.message;
 		if (entry.role === 'model') {
-			// Split by lines to handle tables specially
-			const lines = entry.message.split('\n');
-			const formattedLines: string[] = [];
-			let inTable = false;
-			let previousLineWasEmpty = true;
-
-			for (let i = 0; i < lines.length; i++) {
-				const line = lines[i];
-				const nextLine = lines[i + 1];
-				const trimmedLine = line.trim();
-
-				// Improved table detection
-				// A table row must have at least one pipe that's not escaped
-				const hasUnescapedPipe = line.split('\\|').join('').includes('|');
-				const isTableDivider = /^\s*\|?\s*[:?\-]+\s*\|/.test(line);
-				const isTableRow = hasUnescapedPipe && !isTableDivider && trimmedLine !== '|';
-
-				// Check if we're starting a table
-				if ((isTableRow || isTableDivider) && !inTable) {
-					inTable = true;
-					// Add empty line before table if needed
-					if (!previousLineWasEmpty && formattedLines.length > 0) {
-						formattedLines.push('');
-					}
-				}
-
-				// Add the current line
-				formattedLines.push(line);
-
-				// Check if we're ending a table
-				if (inTable && !hasUnescapedPipe && trimmedLine !== '') {
-					inTable = false;
-					// Add empty line after table
-					formattedLines.push('');
-				} else if (inTable && trimmedLine === '') {
-					// Empty line also ends a table
-					inTable = false;
-				}
-
-				// For non-table content, add empty line between paragraphs
-				if (
-					!inTable &&
-					!hasUnescapedPipe &&
-					trimmedLine !== '' &&
-					nextLine &&
-					nextLine.trim() !== '' &&
-					!nextLine.includes('|')
-				) {
-					formattedLines.push('');
-				}
-
-				previousLineWasEmpty = trimmedLine === '';
-			}
-
-			formattedMessage = formattedLines.join('\n');
+			formattedMessage = this.formatMessageContent(entry.message);
 
 			// Debug logging for table formatting
 			if (formattedMessage.includes('|')) {
-				this.plugin.logger.log('Table formatting debug:');
-				this.plugin.logger.log('Original message:', entry.message);
-				this.plugin.logger.log('Formatted message:', formattedMessage);
+				this.plugin.logger.debug('Table formatting debug:');
+				this.plugin.logger.debug('Original message:', entry.message);
+				this.plugin.logger.debug('Formatted message:', formattedMessage);
 			}
 		}
 
@@ -338,57 +359,7 @@ export class AgentViewMessages {
 			// Apply the same formatting logic as displayMessage
 			let formattedMessage = fullMarkdown;
 			if (entry.role === 'model') {
-				// Apply the same formatting for tables and paragraphs
-				const lines = fullMarkdown.split('\n');
-				const formattedLines: string[] = [];
-				let inTable = false;
-				let previousLineWasEmpty = true;
-
-				for (let i = 0; i < lines.length; i++) {
-					const line = lines[i];
-					const trimmedLine = line.trim();
-					// Use safer method to detect unescaped pipes (avoiding regex backtracking)
-					const hasUnescapedPipe = line.split('\\|').join('').includes('|');
-					const nextLine = lines[i + 1];
-
-					// Check if we're starting a table
-					if (hasUnescapedPipe && !inTable) {
-						inTable = true;
-						// Add empty line before table if not already present
-						if (!previousLineWasEmpty) {
-							formattedLines.push('');
-						}
-					}
-
-					// Add the current line
-					formattedLines.push(line);
-
-					// Check if we're ending a table
-					if (inTable && !hasUnescapedPipe && trimmedLine !== '') {
-						inTable = false;
-						// Add empty line after table
-						formattedLines.push('');
-					} else if (inTable && trimmedLine === '') {
-						// Empty line also ends a table
-						inTable = false;
-					}
-
-					// For non-table content, add empty line between paragraphs
-					if (
-						!inTable &&
-						!hasUnescapedPipe &&
-						trimmedLine !== '' &&
-						nextLine &&
-						nextLine.trim() !== '' &&
-						!nextLine.includes('|')
-					) {
-						formattedLines.push('');
-					}
-
-					previousLineWasEmpty = trimmedLine === '';
-				}
-
-				formattedMessage = formattedLines.join('\n');
+				formattedMessage = this.formatMessageContent(fullMarkdown);
 			}
 
 			const sourcePath = currentSession?.historyPath || '';
