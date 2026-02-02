@@ -123,6 +123,10 @@ export class AgentViewUI {
 		const toggleBtn = leftSection.createEl('button', {
 			cls: 'gemini-agent-toggle-btn',
 			title: 'Toggle context panel',
+			attr: {
+				'aria-label': 'Toggle context panel',
+				'aria-expanded': 'false',
+			},
 		});
 		setIcon(toggleBtn, 'chevron-down');
 
@@ -131,9 +135,11 @@ export class AgentViewUI {
 			if (isCollapsed) {
 				contextPanel.removeClass('gemini-agent-context-panel-collapsed');
 				setIcon(toggleBtn, 'chevron-up');
+				toggleBtn.setAttribute('aria-expanded', 'true');
 			} else {
 				contextPanel.addClass('gemini-agent-context-panel-collapsed');
 				setIcon(toggleBtn, 'chevron-down');
+				toggleBtn.setAttribute('aria-expanded', 'false');
 			}
 		});
 
@@ -146,9 +152,22 @@ export class AgentViewUI {
 			cls: 'gemini-agent-title-compact',
 		});
 
-		// Make title editable on double-click
-		title.addEventListener('dblclick', () => {
+		// Add edit button for accessibility
+		const editBtn = titleContainer.createEl('button', {
+			cls: 'gemini-agent-toggle-btn',
+			attr: {
+				'aria-label': 'Rename session',
+				title: 'Rename session',
+			},
+		});
+		setIcon(editBtn, 'pencil');
+
+		// Define renaming logic
+		const startRenaming = () => {
 			if (!currentSession) return;
+
+			// Hide the edit button while editing
+			editBtn.style.display = 'none';
 
 			const input = titleContainer.createEl('input', {
 				type: 'text',
@@ -181,6 +200,7 @@ export class AgentViewUI {
 
 				title.textContent = currentSession!.title;
 				title.style.display = '';
+				editBtn.style.display = '';
 				input.remove();
 			};
 
@@ -191,10 +211,15 @@ export class AgentViewUI {
 					saveTitle();
 				} else if (e.key === 'Escape') {
 					title.style.display = '';
+					editBtn.style.display = '';
 					input.remove();
 				}
 			});
-		});
+		};
+
+		// Make title editable on double-click
+		title.addEventListener('dblclick', startRenaming);
+		editBtn.addEventListener('click', startRenaming);
 
 		// Context info badge - always in the same position
 		if (currentSession) {
@@ -262,6 +287,7 @@ export class AgentViewUI {
 		const settingsBtn = rightSection.createEl('button', {
 			cls: 'gemini-agent-btn gemini-agent-btn-icon',
 			title: 'Session Settings',
+			attr: { 'aria-label': 'Session Settings' },
 		});
 		setIcon(settingsBtn, 'settings');
 		settingsBtn.addEventListener('click', () => callbacks.showSessionSettings());
@@ -269,6 +295,7 @@ export class AgentViewUI {
 		const newSessionBtn = rightSection.createEl('button', {
 			cls: 'gemini-agent-btn gemini-agent-btn-icon',
 			title: 'New Session',
+			attr: { 'aria-label': 'New Session' },
 		});
 		setIcon(newSessionBtn, 'plus');
 		newSessionBtn.addEventListener('click', () => callbacks.createNewSession());
@@ -276,6 +303,7 @@ export class AgentViewUI {
 		const listSessionsBtn = rightSection.createEl('button', {
 			cls: 'gemini-agent-btn gemini-agent-btn-icon',
 			title: 'Browse Sessions',
+			attr: { 'aria-label': 'Browse Sessions' },
 		});
 		setIcon(listSessionsBtn, 'list');
 		listSessionsBtn.addEventListener('click', () => callbacks.showSessionList());
@@ -640,6 +668,9 @@ export class AgentViewUI {
 					text: '×',
 					cls: 'gemini-agent-remove-btn',
 					title: 'Remove file',
+					attr: {
+						'aria-label': `Remove ${file.basename}`,
+					},
 				});
 
 				removeBtn.addEventListener('click', () => {
