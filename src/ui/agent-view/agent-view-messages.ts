@@ -74,7 +74,11 @@ export class AgentViewMessages {
 	/**
 	 * Display a conversation entry as a message
 	 */
-	async displayMessage(entry: GeminiConversationEntry, currentSession: ChatSession | null) {
+	async displayMessage(
+		entry: GeminiConversationEntry,
+		currentSession: ChatSession | null,
+		shouldScroll: boolean = true
+	) {
 		// Remove empty state if it exists
 		const emptyState = this.chatContainer.querySelector('.gemini-agent-empty-chat');
 		if (emptyState) {
@@ -249,7 +253,9 @@ export class AgentViewMessages {
 		}
 
 		// Scroll to bottom after displaying message
-		this.scrollToBottom();
+		if (shouldScroll) {
+			this.scrollToBottom();
+		}
 
 		// Setup image click handlers
 		this.setupImageClickHandlers(content, sourcePath);
