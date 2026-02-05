@@ -170,6 +170,7 @@ export class AgentView extends ItemView {
 		const sessionCallbacks: SessionUICallbacks = {
 			clearChat: () => this.chatContainer.empty(),
 			displayMessage: (entry: GeminiConversationEntry) => this.displayMessage(entry),
+			displayBatchMessages: (entries: GeminiConversationEntry[]) => this.displayBatchMessages(entries),
 			updateSessionHeader: () => this.updateSessionHeader(),
 			updateContextPanel: () => this.updateContextPanel(),
 			showEmptyState: () => this.showEmptyState(),
@@ -657,6 +658,13 @@ To reference an image in your response, use the path shown above.`;
 	 */
 	private async displayMessage(entry: GeminiConversationEntry) {
 		await this.messages.displayMessage(entry, this.currentSession);
+	}
+
+	/**
+	 * Display a batch of messages in the chat (delegates to messages component)
+	 */
+	private async displayBatchMessages(entries: GeminiConversationEntry[]) {
+		await this.messages.displayBatchMessages(entries, this.currentSession);
 	}
 
 	/**
