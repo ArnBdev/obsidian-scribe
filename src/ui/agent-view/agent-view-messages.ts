@@ -81,6 +81,41 @@ export class AgentViewMessages {
 			emptyState.remove();
 		}
 
+		const content = this.createMessageContainer(entry);
+		await this.renderMessageContent(entry, content, currentSession);
+
+		// Scroll to bottom after displaying message
+		this.scrollToBottom();
+	}
+
+	/**
+	 * Display a batch of conversation entries as messages
+	 * Optimized for loading history
+	 */
+	async displayBatchMessages(entries: GeminiConversationEntry[], currentSession: ChatSession | null) {
+		// Remove empty state if it exists
+		const emptyState = this.chatContainer.querySelector('.gemini-agent-empty-chat');
+		if (emptyState) {
+			emptyState.remove();
+		}
+
+		const renderTasks: Promise<void>[] = [];
+
+		for (const entry of entries) {
+			const content = this.createMessageContainer(entry);
+			renderTasks.push(this.renderMessageContent(entry, content, currentSession));
+		}
+
+		await Promise.all(renderTasks);
+
+		// Scroll to bottom after displaying all messages
+		this.scrollToBottom();
+	}
+
+	/**
+	 * Create the message container and return the content div
+	 */
+	private createMessageContainer(entry: GeminiConversationEntry): HTMLElement {
 		const messageDiv = this.chatContainer.createDiv({
 			cls: `gemini-agent-message gemini-agent-message-${entry.role}`,
 		});
@@ -95,8 +130,17 @@ export class AgentViewMessages {
 			cls: 'gemini-agent-message-time',
 		});
 
-		const content = messageDiv.createDiv({ cls: 'gemini-agent-message-content' });
+		return messageDiv.createDiv({ cls: 'gemini-agent-message-content' });
+	}
 
+	/**
+	 * Render the content of a message
+	 */
+	private async renderMessageContent(
+		entry: GeminiConversationEntry,
+		content: HTMLElement,
+		currentSession: ChatSession | null
+	) {
 		// Check if this is a tool execution message from history
 		const isToolExecution = entry.metadata?.toolName || entry.message.includes('Tool Execution Results:');
 
@@ -248,9 +292,6 @@ export class AgentViewMessages {
 			await MarkdownRenderer.render(this.app, formattedMessage, content, sourcePath, this.viewContext);
 		}
 
-		// Scroll to bottom after displaying message
-		this.scrollToBottom();
-
 		// Setup image click handlers
 		this.setupImageClickHandlers(content, sourcePath);
 
@@ -274,9 +315,6 @@ export class AgentViewMessages {
 					});
 			});
 		}
-
-		// Auto-scroll to bottom
-		this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
 	}
 
 	/**

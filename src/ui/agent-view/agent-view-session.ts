@@ -14,6 +14,9 @@ export interface SessionUICallbacks {
 	/** Display a message in the chat */
 	displayMessage: (entry: GeminiConversationEntry) => Promise<void>;
 
+	/** Display a batch of messages in the chat */
+	displayBatchMessages: (entries: GeminiConversationEntry[]) => Promise<void>;
+
 	/** Update the session header UI */
 	updateSessionHeader: () => void;
 
@@ -133,9 +136,7 @@ export class AgentViewSession {
 			const history = await this.plugin.sessionHistory.getHistoryForSession(this.currentSession);
 			this.uiCallbacks.clearChat();
 
-			for (const entry of history) {
-				await this.uiCallbacks.displayMessage(entry);
-			}
+			await this.uiCallbacks.displayBatchMessages(history);
 		} catch (error) {
 			this.plugin.logger.error('Failed to load session history:', error);
 		}
