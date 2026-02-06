@@ -258,6 +258,7 @@ export class AgentViewMessages {
 		if (entry.role === 'model' || entry.role === 'user') {
 			const copyButton = content.createEl('button', {
 				cls: 'gemini-agent-copy-button',
+				attr: { 'aria-label': 'Copy message' },
 			});
 			setIcon(copyButton, 'copy');
 
@@ -398,6 +399,7 @@ export class AgentViewMessages {
 			if (entry.role === 'model') {
 				const copyButton = messageDiv.createEl('button', {
 					cls: 'gemini-agent-copy-button',
+					attr: { 'aria-label': 'Copy message' },
 				});
 				setIcon(copyButton, 'copy');
 
