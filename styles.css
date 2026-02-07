@@ -2641,6 +2641,7 @@ If your plugin does not need CSS, delete this file.
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 	width: 100%;
 	max-width: 400px;
+	position: relative;
 }
 
 .gemini-agent-init-context-button:hover {
@@ -2716,6 +2717,40 @@ If your plugin does not need CSS, delete this file.
 .gemini-agent-init-context-button-update .gemini-agent-init-desc {
 	color: var(--text-muted);
 	opacity: 1;
+}
+
+.gemini-agent-init-dismiss-button {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--text-muted);
+	opacity: 0;
+	transition:
+		opacity 0.2s ease,
+		background-color 0.2s ease,
+		color 0.2s ease;
+	cursor: pointer;
+}
+
+.gemini-agent-init-context-button:hover .gemini-agent-init-dismiss-button {
+	opacity: 0.6;
+}
+
+.gemini-agent-init-dismiss-button:hover {
+	opacity: 1 !important;
+	background-color: var(--background-modifier-hover);
+	color: var(--text-normal);
+}
+
+.gemini-agent-init-dismiss-button svg {
+	width: 14px;
+	height: 14px;
 }
 
 /* Agent Capabilities Section */

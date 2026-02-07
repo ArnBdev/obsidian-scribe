@@ -78,6 +78,8 @@ export interface ObsidianGeminiSettings {
 	lastSeenVersion: string;
 	// RAG Indexing settings
 	ragIndexing: RagIndexingSettings;
+	// UI Settings
+	showUpdateVaultContextButton: boolean;
 }
 
 const DEFAULT_SETTINGS: ObsidianGeminiSettings = {
@@ -122,6 +124,8 @@ const DEFAULT_SETTINGS: ObsidianGeminiSettings = {
 		autoSync: true,
 		includeAttachments: false,
 	},
+	// UI Settings
+	showUpdateVaultContextButton: true,
 };
 
 export default class ObsidianGemini extends Plugin {

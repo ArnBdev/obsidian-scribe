@@ -272,6 +272,18 @@ export default class ObsidianGeminiSettingTab extends PluginSettingTab {
 				})
 			);
 
+		new Setting(containerEl)
+			.setName("Show 'Update Vault Context' button")
+			.setDesc(
+				"Show the button to update AGENTS.md. Can also be dismissed directly from the Agent UI by clicking the 'x' icon."
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(this.plugin.settings.showUpdateVaultContextButton).onChange(async (value) => {
+					this.plugin.settings.showUpdateVaultContextButton = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
 		// Advanced Settings
 		new Setting(containerEl).setName('Advanced Settings').setHeading();
 

@@ -539,39 +539,58 @@ export class AgentViewMessages {
 			// Check if AGENTS.md exists and show appropriate button
 			const agentsMemoryExists = await this.plugin.agentsMemory.exists();
 
-			const initButton = emptyState.createDiv({
-				cls: agentsMemoryExists
-					? 'gemini-agent-init-context-button gemini-agent-init-context-button-update'
-					: 'gemini-agent-init-context-button',
-			});
-
-			const buttonIcon = initButton.createDiv({ cls: 'gemini-agent-init-icon' });
-			setIcon(buttonIcon, agentsMemoryExists ? 'refresh-cw' : 'sparkles');
-
-			const buttonText = initButton.createDiv({ cls: 'gemini-agent-init-text' });
-
-			if (agentsMemoryExists) {
-				buttonText.createEl('strong', { text: 'Update Vault Context' });
-				buttonText.createEl('span', {
-					text: 'Refresh my understanding of your vault',
-					cls: 'gemini-agent-init-desc',
+			// Logic: Show button if it's Initialize (agentsMemoryExists=false) OR if Update (agentsMemoryExists=true) AND setting is enabled
+			if (!agentsMemoryExists || this.plugin.settings.showUpdateVaultContextButton) {
+				const initButtonContainer = emptyState.createDiv({
+					cls: agentsMemoryExists
+						? 'gemini-agent-init-context-button gemini-agent-init-context-button-update'
+						: 'gemini-agent-init-context-button',
 				});
-			} else {
-				buttonText.createEl('strong', { text: 'Initialize Vault Context' });
-				buttonText.createEl('span', {
-					text: 'Help me understand your vault structure and organization',
-					cls: 'gemini-agent-init-desc',
+
+				const buttonIcon = initButtonContainer.createDiv({ cls: 'gemini-agent-init-icon' });
+				setIcon(buttonIcon, agentsMemoryExists ? 'refresh-cw' : 'sparkles');
+
+				const buttonText = initButtonContainer.createDiv({ cls: 'gemini-agent-init-text' });
+
+				if (agentsMemoryExists) {
+					buttonText.createEl('strong', { text: 'Update Vault Context' });
+					buttonText.createEl('span', {
+						text: 'Refresh my understanding of your vault',
+						cls: 'gemini-agent-init-desc',
+					});
+
+					// Add dismiss button for Update mode
+					const dismissButton = initButtonContainer.createDiv({
+						cls: 'gemini-agent-init-dismiss-button',
+						attr: { 'aria-label': 'Dismiss update button' },
+					});
+					setIcon(dismissButton, 'x');
+
+					// Handle dismiss click
+					dismissButton.addEventListener('click', async (e) => {
+						e.stopPropagation(); // Prevent triggering the main button click
+						this.plugin.settings.showUpdateVaultContextButton = false;
+						await this.plugin.saveSettings();
+						initButtonContainer.remove(); // Remove immediately
+						new Notice('Update button dismissed. You can re-enable it in settings.');
+					});
+				} else {
+					buttonText.createEl('strong', { text: 'Initialize Vault Context' });
+					buttonText.createEl('span', {
+						text: 'Help me understand your vault structure and organization',
+						cls: 'gemini-agent-init-desc',
+					});
+				}
+
+				initButtonContainer.addEventListener('click', async () => {
+					// Run the vault analyzer
+					if (this.plugin.vaultAnalyzer) {
+						await this.plugin.vaultAnalyzer.initializeAgentsMemory();
+						// Refresh the empty state to update the button
+						await this.showEmptyState(currentSession, onLoadSession, onSendMessage);
+					}
 				});
 			}
-
-			initButton.addEventListener('click', async () => {
-				// Run the vault analyzer
-				if (this.plugin.vaultAnalyzer) {
-					await this.plugin.vaultAnalyzer.initializeAgentsMemory();
-					// Refresh the empty state to update the button
-					await this.showEmptyState(currentSession, onLoadSession, onSendMessage);
-				}
-			});
 
 			// Try to get recent sessions (excluding the current session)
 			// Fetch 6 sessions since we might filter out the current one
