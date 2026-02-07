@@ -169,7 +169,9 @@ export class AgentView extends ItemView {
 		// Initialize session component with callbacks and state
 		const sessionCallbacks: SessionUICallbacks = {
 			clearChat: () => this.chatContainer.empty(),
-			displayMessage: (entry: GeminiConversationEntry) => this.displayMessage(entry),
+			displayMessage: (entry: GeminiConversationEntry, shouldScroll?: boolean) =>
+				this.displayMessage(entry, shouldScroll),
+			scrollToBottom: () => this.messages.scrollToBottom(),
 			updateSessionHeader: () => this.updateSessionHeader(),
 			updateContextPanel: () => this.updateContextPanel(),
 			showEmptyState: () => this.showEmptyState(),
@@ -655,8 +657,8 @@ To reference an image in your response, use the path shown above.`;
 	/**
 	 * Display a message in the chat (delegates to messages component)
 	 */
-	private async displayMessage(entry: GeminiConversationEntry) {
-		await this.messages.displayMessage(entry, this.currentSession);
+	private async displayMessage(entry: GeminiConversationEntry, shouldScroll: boolean = true) {
+		await this.messages.displayMessage(entry, this.currentSession, shouldScroll);
 	}
 
 	/**
