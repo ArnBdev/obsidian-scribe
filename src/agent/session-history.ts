@@ -60,19 +60,6 @@ export class SessionHistory {
 		await this.ensureAgentSessionsFolder();
 
 		let historyFile = this.plugin.app.vault.getAbstractFileByPath(historyPath);
-		let existingContent = '';
-
-		if (historyFile instanceof TFile) {
-			// Read existing content
-			try {
-				existingContent = await this.plugin.app.vault.read(historyFile);
-			} catch (error) {
-				this.plugin.logger.error(`Error reading existing history from ${historyPath}:`, error);
-			}
-		} else {
-			// Create new file with session metadata
-			existingContent = this.generateSessionFrontmatter(session);
-		}
 
 		// Generate the new entry content
 		const role = entry.role.charAt(0).toUpperCase() + entry.role.slice(1);
@@ -92,13 +79,15 @@ export class SessionHistory {
 			isDefined: (value: any) => value !== undefined,
 		});
 
-		const newContent = existingContent + '\n' + entryContent;
-
 		try {
 			if (historyFile instanceof TFile) {
-				// Update existing file
-				await this.plugin.app.vault.modify(historyFile, newContent);
+				// Optimize: Append to existing file instead of reading entire content
+				await this.plugin.app.vault.append(historyFile, '\n' + entryContent);
 			} else {
+				// Create new file with session metadata
+				const existingContent = this.generateSessionFrontmatter(session);
+				const newContent = existingContent + '\n' + entryContent;
+
 				// Create new file
 				await this.plugin.app.vault.create(historyPath, newContent);
 			}
