@@ -54,7 +54,7 @@ describe('SessionHistory - Performance', () => {
 			context: {
 				contextFiles: [],
 				enabledTools: [],
-				requireConfirmation: false,
+				requireConfirmation: [],
 			},
 		};
 	});
@@ -65,6 +65,7 @@ describe('SessionHistory - Performance', () => {
 			message: 'Hello world',
 			created_at: new Date(),
 			model: 'gemini-pro',
+			notePath: '',
 		};
 
 		// Mock file existence
@@ -92,6 +93,7 @@ describe('SessionHistory - Performance', () => {
 			message: 'First message',
 			created_at: new Date(),
 			model: 'gemini-pro',
+			notePath: '',
 		};
 
 		// Mock file NOT exists
