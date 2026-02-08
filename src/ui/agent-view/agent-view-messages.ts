@@ -193,7 +193,15 @@ export class AgentViewMessages {
 					if (toolName && toolContent) {
 						// Create collapsible tool execution block
 						const toolDiv = content.createDiv({ cls: 'gemini-agent-tool-execution' });
-						const toolHeader = toolDiv.createDiv({ cls: 'gemini-agent-tool-header' });
+						const toolHeader = toolDiv.createDiv({
+							cls: 'gemini-agent-tool-header',
+							attr: {
+								role: 'button',
+								'aria-expanded': 'false',
+								'aria-label': `Toggle details for tool ${toolName}`,
+								tabindex: '0',
+							},
+						});
 
 						// Add expand/collapse icon
 						const icon = toolHeader.createEl('span', { cls: 'gemini-agent-tool-icon' });
@@ -232,9 +240,19 @@ export class AgentViewMessages {
 							if (isCollapsed) {
 								toolContentDiv.removeClass('gemini-agent-tool-content-collapsed');
 								setIcon(icon, 'chevron-down');
+								toolHeader.setAttribute('aria-expanded', 'true');
 							} else {
 								toolContentDiv.addClass('gemini-agent-tool-content-collapsed');
 								setIcon(icon, 'chevron-right');
+								toolHeader.setAttribute('aria-expanded', 'false');
+							}
+						});
+
+						// Keyboard support for toggle
+						toolHeader.addEventListener('keydown', (e) => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								toolHeader.click();
 							}
 						});
 					}
@@ -258,6 +276,7 @@ export class AgentViewMessages {
 		if (entry.role === 'model' || entry.role === 'user') {
 			const copyButton = content.createEl('button', {
 				cls: 'gemini-agent-copy-button',
+				attr: { 'aria-label': 'Copy message' },
 			});
 			setIcon(copyButton, 'copy');
 
@@ -398,6 +417,7 @@ export class AgentViewMessages {
 			if (entry.role === 'model') {
 				const copyButton = messageDiv.createEl('button', {
 					cls: 'gemini-agent-copy-button',
+					attr: { 'aria-label': 'Copy message' },
 				});
 				setIcon(copyButton, 'copy');
 
