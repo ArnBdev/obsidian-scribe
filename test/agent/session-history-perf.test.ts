@@ -81,15 +81,9 @@ describe('SessionHistory - Performance', () => {
 
 		// Assert that append WAS called
 		expect(mockPlugin.app.vault.append).toHaveBeenCalledTimes(1);
-		expect(mockPlugin.app.vault.append).toHaveBeenCalledWith(
-			mockFile,
-			expect.stringContaining('Hello world')
-		);
+		expect(mockPlugin.app.vault.append).toHaveBeenCalledWith(mockFile, expect.stringContaining('Hello world'));
 		// Verify newline separator
-		expect(mockPlugin.app.vault.append).toHaveBeenCalledWith(
-			mockFile,
-			expect.stringMatching(/^\n/)
-		);
+		expect(mockPlugin.app.vault.append).toHaveBeenCalledWith(mockFile, expect.stringMatching(/^\n/));
 	});
 
 	it('should still use create for new files', async () => {
