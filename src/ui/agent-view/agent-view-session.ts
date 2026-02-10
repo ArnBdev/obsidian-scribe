@@ -11,8 +11,11 @@ export interface SessionUICallbacks {
 	/** Clear the chat container */
 	clearChat: () => void;
 
+	/** Scroll the chat to the bottom */
+	scrollToBottom: () => void;
+
 	/** Display a message in the chat */
-	displayMessage: (entry: GeminiConversationEntry) => Promise<void>;
+	displayMessage: (entry: GeminiConversationEntry, shouldScroll?: boolean) => Promise<void>;
 
 	/** Update the session header UI */
 	updateSessionHeader: () => void;
@@ -133,9 +136,14 @@ export class AgentViewSession {
 			const history = await this.plugin.sessionHistory.getHistoryForSession(this.currentSession);
 			this.uiCallbacks.clearChat();
 
+			// Render messages sequentially without scrolling to avoid layout thrashing
+			// We use sequential rendering to guarantee message order
 			for (const entry of history) {
-				await this.uiCallbacks.displayMessage(entry);
+				await this.uiCallbacks.displayMessage(entry, false);
 			}
+
+			// Scroll to bottom once after all messages are rendered
+			this.uiCallbacks.scrollToBottom();
 		} catch (error) {
 			this.plugin.logger.error('Failed to load session history:', error);
 		}
