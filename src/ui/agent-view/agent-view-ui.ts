@@ -123,6 +123,10 @@ export class AgentViewUI {
 		const toggleBtn = leftSection.createEl('button', {
 			cls: 'gemini-agent-toggle-btn',
 			title: 'Toggle context panel',
+			attr: {
+				'aria-label': 'Toggle context panel',
+				'aria-expanded': 'false',
+			},
 		});
 		setIcon(toggleBtn, 'chevron-down');
 
@@ -131,9 +135,11 @@ export class AgentViewUI {
 			if (isCollapsed) {
 				contextPanel.removeClass('gemini-agent-context-panel-collapsed');
 				setIcon(toggleBtn, 'chevron-up');
+				toggleBtn.setAttribute('aria-expanded', 'true');
 			} else {
 				contextPanel.addClass('gemini-agent-context-panel-collapsed');
 				setIcon(toggleBtn, 'chevron-down');
+				toggleBtn.setAttribute('aria-expanded', 'false');
 			}
 		});
 
@@ -146,9 +152,15 @@ export class AgentViewUI {
 			cls: 'gemini-agent-title-compact',
 		});
 
-		// Make title editable on double-click
-		title.addEventListener('dblclick', () => {
+		const startTitleEdit = () => {
 			if (!currentSession) return;
+
+			// Check if already editing
+			if (title.style.display === 'none') return;
+
+			// Hide edit button while editing
+			const editBtn = titleContainer.querySelector('.gemini-agent-title-edit-btn') as HTMLElement;
+			if (editBtn) editBtn.style.display = 'none';
 
 			const input = titleContainer.createEl('input', {
 				type: 'text',
@@ -181,6 +193,7 @@ export class AgentViewUI {
 
 				title.textContent = currentSession!.title;
 				title.style.display = '';
+				if (editBtn) editBtn.style.display = '';
 				input.remove();
 			};
 
@@ -191,10 +204,26 @@ export class AgentViewUI {
 					saveTitle();
 				} else if (e.key === 'Escape') {
 					title.style.display = '';
+					if (editBtn) editBtn.style.display = '';
 					input.remove();
 				}
 			});
-		});
+		};
+
+		// Make title editable on double-click
+		title.addEventListener('dblclick', startTitleEdit);
+
+		// Edit button for title
+		if (currentSession) {
+			const editTitleBtn = titleContainer.createEl('button', {
+				cls: 'gemini-agent-toggle-btn gemini-agent-title-edit-btn',
+				attr: {
+					'aria-label': 'Edit session title',
+				},
+			});
+			setIcon(editTitleBtn, 'pencil');
+			editTitleBtn.addEventListener('click', startTitleEdit);
+		}
 
 		// Context info badge - always in the same position
 		if (currentSession) {
@@ -262,6 +291,7 @@ export class AgentViewUI {
 		const settingsBtn = rightSection.createEl('button', {
 			cls: 'gemini-agent-btn gemini-agent-btn-icon',
 			title: 'Session Settings',
+			attr: { 'aria-label': 'Session settings' },
 		});
 		setIcon(settingsBtn, 'settings');
 		settingsBtn.addEventListener('click', () => callbacks.showSessionSettings());
@@ -269,6 +299,7 @@ export class AgentViewUI {
 		const newSessionBtn = rightSection.createEl('button', {
 			cls: 'gemini-agent-btn gemini-agent-btn-icon',
 			title: 'New Session',
+			attr: { 'aria-label': 'New session' },
 		});
 		setIcon(newSessionBtn, 'plus');
 		newSessionBtn.addEventListener('click', () => callbacks.createNewSession());
@@ -276,6 +307,7 @@ export class AgentViewUI {
 		const listSessionsBtn = rightSection.createEl('button', {
 			cls: 'gemini-agent-btn gemini-agent-btn-icon',
 			title: 'Browse Sessions',
+			attr: { 'aria-label': 'Browse sessions' },
 		});
 		setIcon(listSessionsBtn, 'list');
 		listSessionsBtn.addEventListener('click', () => callbacks.showSessionList());
@@ -307,6 +339,7 @@ export class AgentViewUI {
 		const addButton = controlsRow.createEl('button', {
 			cls: 'gemini-agent-btn gemini-agent-btn-sm',
 			title: 'Add context files',
+			attr: { 'aria-label': 'Add context files' },
 		});
 		setIcon(addButton, 'plus');
 		addButton.createSpan({ text: ' Add Files' });
@@ -336,6 +369,9 @@ export class AgentViewUI {
 			attr: {
 				contenteditable: 'true',
 				'data-placeholder': 'Message the agent... (@ to mention files)',
+				role: 'textbox',
+				'aria-multiline': 'true',
+				'aria-label': 'Message input',
 			},
 		}) as HTMLDivElement;
 
@@ -640,6 +676,7 @@ export class AgentViewUI {
 					text: '×',
 					cls: 'gemini-agent-remove-btn',
 					title: 'Remove file',
+					attr: { 'aria-label': `Remove ${file.basename}` },
 				});
 
 				removeBtn.addEventListener('click', () => {
